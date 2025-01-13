@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactFlow, { MiniMap, Controls, Background, Node, Edge } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -45,7 +45,7 @@ const createNodesAndEdges = (users: User[]): { nodes: Node<NodeData>[]; edges: E
       nodes.push({
         id: hobbyId,
         type: 'default',
-        data: { label: hobby, id: '' },
+        data: { label: hobby, id: hobby },
         position: { x: 300, y: index * 150 + hobbyIndex * 50 },
       });
 
@@ -63,6 +63,7 @@ const createNodesAndEdges = (users: User[]): { nodes: Node<NodeData>[]; edges: E
 const UserFlow: React.FC = () => {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState('');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null); // Track selected node
 
   const filteredHobbies = availableHobbies.filter((hobby) =>
     hobby.toLowerCase().includes(search.toLowerCase())
@@ -80,8 +81,8 @@ const UserFlow: React.FC = () => {
       y: event.clientY - reactFlowBounds.top,
     };
 
-    // Determine closest user node (example logic, refine as needed)
-    const userId = users[0]?.id; // Example logic to target a user
+    // Assume the first user gets the hobby
+    const userId = users[0]?.id;
     if (userId && hobby) {
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
@@ -91,7 +92,54 @@ const UserFlow: React.FC = () => {
     }
   };
 
+  // Handle Backspace key press
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Backspace' && selectedNodeId) {
+      const { nodes, edges } = createNodesAndEdges(users);
+
+      // Check if the selected node is a hobby node
+      const hobbyNode = nodes.find((node) => node.id === selectedNodeId);
+      if (hobbyNode && hobbyNode.id.startsWith('hobby-')) {
+        const userId = hobbyNode.id.split('-')[1]; // Extract the userId from hobby node ID
+        const hobbyIndex = hobbyNode.id.split('-')[2]; // Extract the hobby index from hobby node ID
+
+        // Remove the hobby from the user
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.id === userId
+              ? { ...user, hobbies: user.hobbies.filter((_, index) => index !== parseInt(hobbyIndex)) }
+              : user
+          )
+        );
+
+        // Remove the hobby node and associated edge
+        const newNodes = nodes.filter((node) => node.id !== selectedNodeId);
+        const newEdges = edges.filter((edge) => edge.source !== hobbyNode.id && edge.target !== hobbyNode.id);
+
+        // Set new nodes and edges
+        // ReactFlow state update
+        setNodes(newNodes);
+        setEdges(newEdges);
+      }
+    }
+  };
+
   const { nodes, edges } = createNodesAndEdges(users);
+
+  // Set up keydown listener on mount
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedNodeId, users]);
+
+  // Handle node click to select
+  const onNodeClick = (event: React.MouseEvent, node: Node) => {
+    setSelectedNodeId(node.id);
+  };
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
@@ -139,6 +187,7 @@ const UserFlow: React.FC = () => {
           onDrop={handleDrop}
           onDragOver={(event) => event.preventDefault()}
           fitView
+          onNodeClick={onNodeClick} // Track selected node
         >
           <MiniMap />
           <Controls />
