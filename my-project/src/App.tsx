@@ -1,5 +1,4 @@
-import React from 'react';
-import UserFlow from './userflow';
+import UserFlow from './components/userflow';
 
 function App() {
   return (
