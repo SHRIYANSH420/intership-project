@@ -5,7 +5,8 @@ This project is a full-stack web application built using **Express** for the ser
 ## Features
 
 - **Backend**: API built performing CRUD operation with Express.
-- **Frontend**: React app Reactflow with Vite for fast builds and hot module replacement.
+- **Frontend**: React app Reactflow with Vite for fast builds
+- **drag and drop feature real time update on nodes**
   
 ---
 
