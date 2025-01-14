@@ -8,8 +8,8 @@ const userSchema = new mongoose.Schema({
   }, // Custom ID
   name: { 
     type: String, 
-    required: [true, "Name is required"], // Custom error message
-    trim: true // Removes unnecessary whitespace
+    required: [true, "Name is required"], 
+    trim: true 
   },
   age: { 
     type: Number, 

@@ -2,7 +2,7 @@ const express = require("express");
 const User = require("../models/user"); 
 const router = express.Router();
 
-// Get All Users
+//get all users
 router.get("/", async (req, res) => {
   try {
     const users = await User.find();
@@ -12,7 +12,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get a Single User by ID
+//get a specific user
 router.get("/:id", async (req, res) => {
   try {
     const user = await User.findOne({ id: req.params.id });
@@ -25,7 +25,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Create a New User
+//create a new user
 router.post("/", async (req, res) => {
   const { id, name, age, hobbies } = req.body;
 
@@ -42,7 +42,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Update an Existing User
+//update a user
 router.put("/:id", async (req, res) => {
   const { name, age, hobbies } = req.body;
 
@@ -67,6 +67,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+//add a hobby to a user
 router.put("/:id/hobbies", async (req, res) => {
   const { id } = req.params;
   const { hobby } = req.body;
@@ -95,7 +96,7 @@ router.put("/:id/hobbies", async (req, res) => {
 });
 
 
-// Delete a User
+//delete a user
 router.delete("/:id", async (req, res) => {
   try {
     const deletedUser = await User.findOneAndDelete({ id: req.params.id });
