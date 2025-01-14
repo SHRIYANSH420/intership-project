@@ -1,5 +1,5 @@
 const express = require("express");
-const User = require("../models/user"); // Import the User model
+const User = require("../models/user"); 
 const router = express.Router();
 
 // Get All Users
@@ -66,6 +66,34 @@ router.put("/:id", async (req, res) => {
     res.status(400).json({ message: "Error updating user.", error: err.message });
   }
 });
+
+router.put("/:id/hobbies", async (req, res) => {
+  const { id } = req.params;
+  const { hobby } = req.body;
+
+  if (!hobby) {
+    return res.status(400).json({ message: "Hobby is required." });
+  }
+
+  try {
+    const user = await User.findOne({ id });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (user.hobbies.includes(hobby)) {
+      return res.status(400).json({ message: "Hobby already exists." });
+    }
+
+    user.hobbies.push(hobby);
+    await user.save();
+
+    res.json({ message: "Hobby added successfully.", user });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update hobby.", error: error.message });
+  }
+});
+
 
 // Delete a User
 router.delete("/:id", async (req, res) => {

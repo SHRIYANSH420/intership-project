@@ -7,7 +7,7 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 app.use(cors({
-    origin: "http://localhost:5173", // Replace with your client-side URL
+    origin: "http://localhost:5173",
   }));
 app.use(express.json());
 

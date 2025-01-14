@@ -1,9 +1,6 @@
 import React from "react";
 import { useForm, useFieldArray, SubmitHandler } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
 
-// Define the form's data structure
 interface UserFormData {
   id: string;
   name: string;
@@ -11,29 +8,12 @@ interface UserFormData {
   hobbies: string[];
 }
 
-// Validation Schema
-const schema = yup.object().shape({
-  id: yup.string().required("ID is required"),
-  name: yup.string().required("Name is required"),
-  age: yup
-    .number()
-    .typeError("Age must be a number")
-    .positive("Age must be positive")
-    .integer("Age must be an integer")
-    .required("Age is required"),
-  hobbies: yup
-    .array()
-    .of(yup.string().required("Hobby cannot be empty"))
-    .min(1, "At least one hobby is required"),
-});
-
 interface UserFormProps {
   onSubmit: (data: UserFormData) => Promise<void>;
   user?: UserFormData;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ onSubmit, user }) => {
-  // React Hook Form Setup
+const UserForm: React.FC<UserFormProps> = ({ user }) => {
   const {
     register,
     handleSubmit,
@@ -41,30 +21,36 @@ const UserForm: React.FC<UserFormProps> = ({ onSubmit, user }) => {
     formState: { errors },
     reset,
   } = useForm<UserFormData>({
-    resolver: yupResolver(schema),
     defaultValues: user || { id: "", name: "", age: undefined, hobbies: [""] },
   });
 
-  // Field Array for Hobbies
   const { fields, append, remove } = useFieldArray({
     control,
     name: "hobbies",
   });
 
-  // Handle Form Submit
   const submitHandler: SubmitHandler<UserFormData> = async (data) => {
+    //validation
+    if (data.age <= 0 || !Number.isInteger(data.age)) {
+      alert("Age must be a positive integer.");
+      return;
+    }
+    if (data.hobbies.length === 0 || data.hobbies.some((hobby) => !hobby.trim())) {
+      alert("Please enter at least one valid hobby.");
+      return;
+    }
+
     try {
-      const response = await fetch('http://localhost:3000/users', {
-        method: 'POST',
+      const response = await fetch("http://localhost:3000/users", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to save user');
+        throw new Error("Failed to save user");
       }
-
       alert("User saved successfully!");
       reset();
     } catch {
@@ -75,91 +61,94 @@ const UserForm: React.FC<UserFormProps> = ({ onSubmit, user }) => {
   return (
     <form
       onSubmit={handleSubmit(submitHandler)}
-      className="max-w-lg mx-auto bg-white shadow-md rounded-lg p-6"
+      className="max-w-3xl mx-auto bg-gray-50 shadow-lg rounded-lg p-8 space-y-6"
     >
-      <div className="mb-4">
+      <h2 className="text-2xl font-bold text-gray-800">User Form</h2>
+      <div>
         <label htmlFor="id" className="block text-sm font-medium text-gray-700">
           ID
         </label>
         <input
           id="id"
           type="text"
-          {...register("id")}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          {...register("id", { required: true })}
+          className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+          required
         />
         {errors.id && (
-          <span className="text-sm text-red-500">{errors.id.message}</span>
+          <p className="mt-1 text-sm text-red-600">ID is required.</p>
         )}
       </div>
-
-      <div className="mb-4">
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+      <div>
+        <label
+          htmlFor="name"
+          className="block text-sm font-medium text-gray-700"
+        >
           Name
         </label>
         <input
           id="name"
           type="text"
-          {...register("name")}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          {...register("name", { required: true })}
+          className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+          required
         />
         {errors.name && (
-          <span className="text-sm text-red-500">{errors.name.message}</span>
+          <p className="mt-1 text-sm text-red-600">Name is required.</p>
         )}
       </div>
-
-      <div className="mb-4">
+      <div>
         <label htmlFor="age" className="block text-sm font-medium text-gray-700">
           Age
         </label>
         <input
           id="age"
           type="number"
-          {...register("age")}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          {...register("age", { required: true, valueAsNumber: true })}
+          className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+          min="1"
+          required
         />
         {errors.age && (
-          <span className="text-sm text-red-500">{errors.age.message}</span>
+          <p className="mt-1 text-sm text-red-600">Age is required.</p>
         )}
       </div>
-
-      <div className="mb-4">
+      <div>
         <label className="block text-sm font-medium text-gray-700">Hobbies</label>
-        {fields.map((field, index) => (
-          <div key={field.id} className="flex items-center mb-2">
-            <input
-              type="text"
-              {...register(`hobbies.${index}` as const)}
-              placeholder={`Hobby ${index + 1}`}
-              className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => remove(index)}
-              className="ml-2 text-red-500 hover:text-red-700"
-            >
-              Remove
-            </button>
-            {errors.hobbies && errors.hobbies[index] && (
-              <span className="text-sm text-red-500 ml-2">
-                {errors.hobbies[index]?.message}
-              </span>
-            )}
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => append("")}
-          className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          + Add Hobby
-        </button>
+        <div className="space-y-4">
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex items-center space-x-4">
+              <input
+                type="text"
+                {...register(`hobbies.${index}` as const)}
+                placeholder={`Hobby ${index + 1}`}
+                className="flex-1 rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="text-red-600 hover:text-red-800"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => append("")}
+            className="text-indigo-600 hover:text-indigo-800"
+          >
+            + Add Hobby
+          </button>
+        </div>
       </div>
 
       <button
         type="submit"
-        className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        className="w-full py-3 text-white bg-indigo-600 rounded-md shadow hover:bg-indigo-700"
       >
-        Save
+        Submit
       </button>
     </form>
   );
